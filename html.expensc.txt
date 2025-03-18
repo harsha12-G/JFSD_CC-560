@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background: url('https://wallpapers.com/images/hd/calculator-1920-x-1920-background-mmnw3eszdqy2jkjd.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+        .container {
+            max-width: 450px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.6);
+            color: #333;
+        }
+        input, select, button {
+            display: block;
+            width: 100%;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #218838;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #f4f4f4;
+            margin: 5px 0;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            border-radius: 5px;
+        }
+        .expense-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="expense-title">Expense Tracker</h2>
+        <input type="number" id="salary" placeholder="Enter Monthly Salary">
+        <button onclick="setSalary()">Set Salary</button>
+        <input type="number" id="amount" placeholder="Amount">
+        <input type="text" id="description" placeholder="Description">
+        <input type="date" id="expenseDate">
+        <select id="category">
+            <option>Food</option>
+            <option>Transport</option>
+            <option>Entertainment</option>
+            <option>rent</option>
+            <option>Other</option>
+        </select>
+        <label><input type="checkbox" id="overExpenseCheck"> Mark as Over Expense</label>
+        <button onclick="addExpense()">Add Expense</button>
+        <h3>Total Spent: ₹<span id="total">0</span></h3>
+        <h3>Remaining Balance: ₹<span id="remaining">0</span></h3>
+        <h3>Over Expense: <span id="overExpense"></span></h3>
+        <ul id="expenseList"></ul>
+    </div>
+
+    <script>
+        let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+        let salary = JSON.parse(localStorage.getItem("salary")) || 0;
+        updateUI();
+
+        function setSalary() {
+            salary = Number(document.getElementById("salary").value);
+            localStorage.setItem("salary", JSON.stringify(salary));
+            updateUI();
+        }
+
+        function addExpense() {
+            let amount = document.getElementById("amount").value;
+            let description = document.getElementById("description").value;
+            let category = document.getElementById("category").value;
+            let date = document.getElementById("expenseDate").value || new Date().toISOString().split('T')[0];
+            let isOverExpense = document.getElementById("overExpenseCheck").checked;
+            
+            if (!amount || !description) return;
+            
+            expenses.push({ amount: Number(amount), description, category, date, isOverExpense });
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+            updateUI();
+            document.getElementById("amount").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("expenseDate").value = "";
+            document.getElementById("overExpenseCheck").checked = false;
+        }
+
+        function updateUI() {
+            let list = document.getElementById("expenseList");
+            list.innerHTML = "";
+            let total = 0;
+            
+            expenses.forEach((expense, index) => {
+                total += expense.amount;
+                let li = document.createElement("li");
+                li.innerHTML = `${expense.date} - ${expense.category}: ₹${expense.amount} - ${expense.description} 
+                ${expense.isOverExpense ? "(Over Expense)" : ""}
+                <button onclick="editExpense(${index})">✏️</button>
+                <button onclick="removeExpense(${index})">❌</button>`;
+                list.appendChild(li);
+            });
+            
+            let remaining = salary - total;
+            let overExpenseText = expenses.some(exp => exp.isOverExpense) ? "Yes" : "No";
+            
+            document.getElementById("total").innerText = total.toFixed(2);
+            document.getElementById("remaining").innerText = remaining.toFixed(2);
+            document.getElementById("overExpense").innerText = overExpenseText;
+        }
+
+        function editExpense(index) {
+            let expense = expenses[index];
+            document.getElementById("amount").value = expense.amount;
+            document.getElementById("description").value = expense.description;
+            document.getElementById("expenseDate").value = expense.date;
+            document.getElementById("category").value = expense.category;
+            document.getElementById("overExpenseCheck").checked = expense.isOverExpense;
+            
+            removeExpense(index);
+        }
+
+        function removeExpense(index) {
+            expenses.splice(index, 1);
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+            updateUI();
+        }
+    </script>
+</body>
+</html>
